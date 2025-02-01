@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethereum Sepolia Balance</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.10.0/ethers.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #balance {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        #walletAddress {
+            font-size: 14px;
+            color: #333;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Check Your Sepolia ETH Balance</h1>
+    <button id="fetchBalance">Get ETH Balance</button>
+    <p id="balance">Balance: -- ETH</p>
+    <p id="walletAddress"></p>
+
+    <script>
+        let provider;
+        if (window.ethereum) {
+            provider = new ethers.BrowserProvider(window.ethereum); // Connect to MetaMask
+        } else {
+            alert("Please install MetaMask to use this feature.");
+        }
+
+        // Function to Get Wallet Address
+        async function getAccount() {
+            if (window.ethereum) {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    document.getElementById("walletAddress").innerText = `Wallet: ${accounts[0]}`;
+                    return accounts[0];  // First account in MetaMask
+                } catch (err) {
+                    console.error('Error getting accounts: ', err);
+                    alert("Failed to connect to MetaMask.");
+                    return null;
+                }
+            } else {
+                alert("MetaMask is not installed!");
+                return null;
+            }
+        }
+
+        // Function to Get ETH Balance
+        async function fetchBalance() {
+            const userAddress = await getAccount();
+            if (!userAddress) return;
+
+            document.getElementById("balance").innerText = "Fetching balance...";
+
+            try {
+                const balance = await provider.getBalance(userAddress);  // Get balance in Wei
+                const balanceInEth = ethers.formatEther(balance);  // Convert to ETH
+                document.getElementById("balance").innerText = `Balance: ${balanceInEth} ETH`;
+            } catch (error) {
+                console.error("Error fetching balance:", error);
+                document.getElementById("balance").innerText = "Error fetching balance!";
+            }
+        }
+
+        // Add event listener to button
+        document.getElementById('fetchBalance').addEventListener('click', fetchBalance);
+
+        // Auto-fetch balance on page load (if MetaMask is connected)
+        window.addEventListener("load", async () => {
+            const accounts = await window.ethereum?.request({ method: 'eth_accounts' });
+            if (accounts && accounts.length > 0) {
+                fetchBalance();
+            }
+        });
+    </script>
+
+</body>
+</html>
